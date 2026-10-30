@@ -9,7 +9,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Redaction:ital,wght@0,400;0,700;1,400&family=Redaction+10:wght@400;700&family=Redaction+20:wght@400;700&family=Redaction+35:wght@400;700&family=Redaction+50:wght@400;700&family=Redaction+70:wght@400;700&family=Redaction+100:wght@400;700&display=swap">
 <style>
   [hidden] { display: none !important; }
-  /* Layout: one fixed 2000×1332 book spread, scaled to fit the screen. Black type on full white paper. Flipping turns the whole spread upside down and inverts it. */
+  /* Layout: a fixed spread scaled to the screen: 2000×1332 on wide screens, 1000 wide and as tall as
+     the phone in portrait. Black type on full white, no frame; words may run past the edges.
+     The rules we're making show upside down and inverted. */
   :root {
     --paper: #ffffff;
     --ink: #0d0d0d;
@@ -19,6 +21,8 @@
     --face: 'Redaction', 'Times New Roman', Times, serif;
     color-scheme: light;
   }
+  html.inverted { --surround: #0d0d0d; }
+  html { background: var(--surround); }
   html, body { height: 100%; }
   body {
     box-sizing: border-box;
@@ -30,14 +34,11 @@
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-block: 16px;
     overflow: hidden;
+    -webkit-text-size-adjust: 100%;
   }
   #viewport { position: relative; width: 100%; height: 100%; }
   #stage { position: absolute; left: 0; top: 0; width: 2000px; height: 1332px; transform-origin: 0 0; }
-  #book {
-    position: absolute; inset: 0; box-sizing: border-box;
-    border: 8px solid var(--ink); background: var(--paper); color: var(--ink);
-    overflow: hidden;
-  }
+  #book { position: absolute; inset: 0; background: var(--paper); color: var(--ink); }
   #book.flipped { transform: rotate(180deg); filter: invert(1); }
   .view { position: absolute; inset: 0; transition: opacity 700ms ease; }
   .view.fading { opacity: 0; }
@@ -54,10 +55,10 @@
     transition: opacity 900ms ease;
   }
   .corner.waiting { opacity: 0; pointer-events: none; }
-  button:focus-visible, [role="button"]:focus-visible, .b:focus-visible { outline: 3px solid #2f6fde; outline-offset: 3px; }
+  button:focus-visible, .b:focus-visible { outline: 3px solid #2f6fde; outline-offset: 3px; }
 
   /* ---------- intro ---------- */
-  #intro h1 {
+  #question {
     position: absolute; left: 84px; top: 46px; margin: 0;
     font-family: 'Redaction', 'Times New Roman', serif;
     font-weight: 400; font-size: 158px; line-height: .86; letter-spacing: -1px; white-space: nowrap;
@@ -86,7 +87,7 @@
   }
   #ruler button.live { cursor: pointer; }
   #ruler button.live:hover { text-decoration: underline; }
-  #lines { position: absolute; inset: 0; width: 2000px; height: 1332px; pointer-events: none; }
+  #lines { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
   #num {
     position: absolute; left: 392px; top: 352px; margin: 0;
     font-family: 'Redaction 50', 'Redaction', serif; font-weight: 700;
@@ -119,6 +120,23 @@
   @keyframes tick { from { opacity: 0; } to { opacity: 1; } }
   @keyframes draw { from { stroke-dashoffset: 1400; } to { stroke-dashoffset: 0; } }
 
+  /* ---------- phones in portrait: a tall single page ---------- */
+  #stage.portrait #question { left: 56px; top: 70px; width: 900px; font-size: 120px; line-height: .9; white-space: normal; }
+  #stage.portrait #question br { display: none; }
+  #stage.portrait .corner { right: 40px; bottom: 56px; font-size: 46px; padding: 18px 30px 22px; border-width: 3px; }
+  #stage.portrait #essay-text {
+    left: 64px; top: 70px; width: 872px; bottom: 200px; height: auto;
+    column-count: 1; font-size: 37px; line-height: 1.5;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  }
+  #stage.portrait #ruler { top: 64px; height: 70px; }
+  #stage.portrait #ruler button { font-size: 30px; padding: 4px 6px; }
+  #stage.portrait #num { left: 78px; top: 236px; font-size: 200px; letter-spacing: -5px; }
+  #stage.portrait #rule { left: 64px; right: 64px; top: 560px; width: auto; font-size: 50px; line-height: 1.45; }
+  #stage.portrait .folio { font-size: 30px; top: auto; bottom: 64px; }
+  #stage.portrait .folio.l { left: 64px; }
+  #stage.portrait .folio.r { right: auto; left: 160px; }
+
   @media (prefers-reduced-motion: reduce) {
     .view { transition: none; }
     #spread.enter * { animation: none !important; }
@@ -144,10 +162,10 @@
 
       <section id="spread" class="view" hidden>
         <nav id="ruler" aria-label="Rules"></nav>
-        <svg id="lines" viewBox="0 0 2000 1332" aria-hidden="true">
-          <rect id="numbox" x="365" y="420" width="267" height="195" fill="none" stroke="currentColor" stroke-width="2"/>
-          <line id="lead" x1="632" y1="420" x2="1890" y2="125" stroke="currentColor" stroke-width="2.5"/>
-          <path id="flag" d="" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <svg id="lines" aria-hidden="true">
+          <rect id="numbox" fill="none" stroke="currentColor" stroke-width="2"/>
+          <line id="lead" stroke="currentColor" stroke-width="2.5"/>
+          <path id="flag" fill="none" stroke="currentColor" stroke-width="2.5"/>
         </svg>
         <p id="num">01.</p>
         <p id="rule"></p>
@@ -155,7 +173,6 @@
         <span class="folio r" id="folioR">9</span>
       </section>
     </div>
-
   </div>
 </div>
 
@@ -233,7 +250,7 @@ const SIDES = {
 const FAMS = ['Redaction', 'Redaction 10', 'Redaction 20', 'Redaction 35', 'Redaction 50', 'Redaction 70', 'Redaction 100'];
 const PX_OUT = FAMS.slice(1);
 const PX_IN = PX_OUT.slice().reverse();
-const TICKS = 74, STEP_MS = 70, RING_N = 24, RING_MS = 10000;
+const STEP_MS = 70, RING_N = 24, RING_MS = 10000;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const $ = id => document.getElementById(id);
@@ -242,23 +259,62 @@ let side = 'given', view = 'intro', page = 1, busy = false, wave = 0;
 let ringTimers = [], revealTimer = 0;
 const ringPlayed = { given: false, making: false };
 
-/* ---------- scale the spread to the screen ---------- */
+/* ---------- two layouts: the wide spread, and a tall page for phones ---------- */
+let L = null;
+function makeLayout(portrait, vw, vh) {
+  if (!portrait) return {
+    portrait, W: 2000, H: 1332, ticks: 74, tickX: k => 1903 - (k - 1) * 24.5,
+    flag: { top: 80, bottom: 125, back: 12, tip: 16 }, box: [365, 420, 267, 195], stroke: [2, 2.5],
+    ring: { cx: 930, cy: 800, rx: 960, ry: 430, base: 102, spread: 28 }
+  };
+  const H = Math.max(1700, Math.round(1000 * vh / vw));
+  return {
+    portrait, W: 1000, H, ticks: 20, tickX: k => 935 - (k - 1) * 45,
+    flag: { top: 64, bottom: 140, back: 22, tip: 28 }, box: [48, 300, 222, 165], stroke: [3, 3.5],
+    ring: { cx: 500, cy: Math.round(H * 0.63), rx: 590, ry: Math.round(H * 0.29), base: 74, spread: 22 }
+  };
+}
+
 function fit() {
   const vp = $('viewport');
-  const s = Math.min(vp.clientWidth / 2000, vp.clientHeight / 1332);
-  stage.style.transform = `translate(${(vp.clientWidth - 2000 * s) / 2}px, ${(vp.clientHeight - 1332 * s) / 2}px) scale(${s})`;
+  const vw = vp.clientWidth, vh = vp.clientHeight;
+  const portrait = vw / vh < 0.9;
+  const next = makeLayout(portrait, vw, vh);
+  const changed = !L || L.portrait !== next.portrait || L.H !== next.H;
+  L = next;
+  stage.classList.toggle('portrait', portrait);
+  stage.style.width = L.W + 'px';
+  stage.style.height = L.H + 'px';
+  const s = Math.min(vw / L.W, vh / L.H);
+  stage.style.transform = `translate(${(vw - L.W * s) / 2}px, ${(vh - L.H * s) / 2}px) scale(${s})`;
+  if (changed) relayout();
 }
-addEventListener('resize', fit);
+let resizeTimer = 0;
+addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fit, 80); });
+
+function relayout() {
+  const svg = $('lines');
+  svg.setAttribute('viewBox', `0 0 ${L.W} ${L.H}`);
+  svg.setAttribute('width', L.W);
+  svg.setAttribute('height', L.H);
+  const [bx, by, bw, bh] = L.box;
+  Object.entries({ x: bx, y: by, width: bw, height: bh, 'stroke-width': L.stroke[0] }).forEach(([a, v]) => $('numbox').setAttribute(a, v));
+  $('lead').setAttribute('stroke-width', L.stroke[1]);
+  $('flag').setAttribute('stroke-width', L.stroke[1]);
+  buildRuler();
+  if (view === 'intro') { ringPlayed[side] = ringPlayed[side] || ringTimers.length > 0; playRing(); }
+  if (view === 'rule') renderRule();
+}
 
 /* ---------- intro ring: the word arrives over ten seconds ---------- */
 function ringHTML(word, pending) {
-  const cx = 930, cy = 800, rx = 960, ry = 430;
+  const { cx, cy, rx, ry, base, spread } = L.ring;
   let html = '';
   for (let i = 0; i < RING_N; i++) {
     const t = (-100 + (290 * i) / (RING_N - 1) + Math.sin(i * 2.3) * 6) * Math.PI / 180;
     const x = cx + rx * Math.cos(t) + Math.sin(i * 1.7) * 40;
     const y = cy + ry * Math.sin(t) + Math.cos(i * 1.3) * 30;
-    const size = 102 + ((i * 37) % 28);
+    const size = base + ((i * 37) % spread);
     html += `<span class="ring-word${pending ? ' pending' : ''}" data-i="${i}" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;font-size:${size}px;font-family:'${FAMS[i % FAMS.length]}', 'Times New Roman', serif">${word}</span>`;
   }
   return html;
@@ -266,13 +322,11 @@ function ringHTML(word, pending) {
 function playRing() {
   ringTimers.forEach(clearTimeout);
   ringTimers = [];
-  const S = SIDES[side];
   const play = !ringPlayed[side] && !reduced;
-  $('ring').innerHTML = ringHTML(S.word, play);
+  $('ring').innerHTML = ringHTML(SIDES[side].word, play);
   $('open').classList.toggle('waiting', play);
   if (!play) return;
-  const words = [...document.querySelectorAll('#ring .ring-word')];
-  words.forEach((el, i) => {
+  document.querySelectorAll('#ring .ring-word').forEach((el, i) => {
     ringTimers.push(setTimeout(() => { el.classList.remove('pending'); el.classList.add('arrive'); }, (RING_MS / RING_N) * i));
   });
   ringTimers.push(setTimeout(() => { ringPlayed[side] = true; $('open').classList.remove('waiting'); }, RING_MS));
@@ -290,32 +344,34 @@ setInterval(tickWave, 480);
 $('essay-text').innerHTML = ESSAY.map(([c, t]) => `<p class="${c}">${t}</p>`).join('');
 
 /* ---------- ruler ---------- */
-const tickX = k => 1903 - (k - 1) * 24.5;
-(function buildRuler() {
+function buildRuler() {
   let html = '';
-  for (let k = TICKS; k >= 1; k--) {
+  for (let k = L.ticks; k >= 1; k--) {
     const live = k <= 20, label = String(k).padStart(2, '0') + '.';
-    html += `<button type="button" class="${live ? 'live' : ''}" style="left:${tickX(k)}px;--d:${TICKS - k}" ${live ? `data-k="${k}" aria-label="Rule ${k}"` : 'tabindex="-1" aria-hidden="true"'}>${label}</button>`;
+    html += `<button type="button" class="${live ? 'live' : ''}" style="left:${L.tickX(k)}px;--d:${L.ticks - k}" ${live ? `data-k="${k}" aria-label="Rule ${k}"` : 'tabindex="-1" aria-hidden="true"'}>${label}</button>`;
   }
   $('ruler').innerHTML = html;
-  $('ruler').addEventListener('click', e => {
-    const b = e.target.closest('button[data-k]');
-    if (b) goRule(+b.dataset.k);
-  });
-})();
+}
+$('ruler').addEventListener('click', e => {
+  const b = e.target.closest('button[data-k]');
+  if (b) goRule(+b.dataset.k);
+});
 
 /* ---------- spreads ---------- */
 const boxed = s => s.replace(/\[([^\]]+)\]/g, '<span class="b" role="button" tabindex="0">$1</span>');
-const plain = s => s.replace(/[\[\]]/g, '');
 const pad = k => String(k).padStart(2, '0') + '.';
 
 function renderRule() {
-  const k = page, x = tickX(k);
+  const k = page, x = L.tickX(k), f = L.flag;
+  const [bx, by, bw] = L.box;
   $('num').textContent = pad(k);
   $('rule').innerHTML = side === 'given' ? boxed(GIVEN[k - 1]) : MAKING[k - 1];
   $('rule').classList.remove('grey');
-  $('lead').setAttribute('x2', x - 12);
-  $('flag').setAttribute('d', `M${x - 12} 125 V80 L${x + 16} 96 L${x - 12} 104`);
+  $('lead').setAttribute('x1', bx + bw);
+  $('lead').setAttribute('y1', by);
+  $('lead').setAttribute('x2', x - f.back);
+  $('lead').setAttribute('y2', f.bottom);
+  $('flag').setAttribute('d', `M${x - f.back} ${f.bottom} V${f.top} L${x + f.tip} ${f.top + f.tip} L${x - f.back} ${f.top + f.tip * 1.5}`);
   $('folioL').textContent = 6 + k * 2;
   $('folioR').textContent = 7 + k * 2;
   document.querySelectorAll('#ruler button[data-k]').forEach(b => b.toggleAttribute('aria-current', +b.dataset.k === k));
@@ -325,6 +381,7 @@ function renderRule() {
 function setSide(s) {
   side = s;
   book.classList.toggle('flipped', s === 'making');
+  document.documentElement.classList.toggle('inverted', s === 'making');
 }
 
 function show(v) {
@@ -334,7 +391,8 @@ function show(v) {
   $('essay').hidden = v !== 'essay';
   $('spread').hidden = v !== 'rule';
   if (v === 'intro') { $('question').innerHTML = SIDES[side].q; playRing(); }
-  else ringTimers.forEach(clearTimeout);
+  else { ringTimers.forEach(clearTimeout); ringTimers = []; }
+  if (v === 'essay') $('essay-text').scrollTop = 0;
   if (v === 'rule') renderRule();
 }
 
@@ -377,7 +435,7 @@ function goRule(k) {
   pixelSwap(() => { page = k; setSide('given'); show('rule'); });
 }
 function next() {
-  if (view === 'intro') pixelSwap(() => show('essay'));
+  if (view === 'intro') { if (!$('open').classList.contains('waiting')) pixelSwap(() => show('essay')); }
   else if (view === 'essay') fadeToRuleOne();
   else if (page < 20) goRule(page + 1);
 }
@@ -409,7 +467,7 @@ function reveal() {
 $('rule').addEventListener('click', e => { if (e.target.closest('.b')) reveal(); });
 $('rule').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.b')) { e.preventDefault(); reveal(); } });
 
-/* ---------- controls ---------- */
+/* ---------- controls: buttons, arrow keys, and swipes on touch screens ---------- */
 $('open').addEventListener('click', () => pixelSwap(() => show('essay')));
 $('to-rules').addEventListener('click', fadeToRuleOne);
 addEventListener('keydown', e => {
@@ -417,9 +475,24 @@ addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
 });
+let touch = null;
+$('viewport').addEventListener('touchstart', e => {
+  const t = e.changedTouches[0];
+  touch = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+$('viewport').addEventListener('touchend', e => {
+  if (!touch) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+  touch = null;
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+  // upside down, the page's left and right are reversed
+  const forward = (dx < 0) !== (side === 'making');
+  forward ? next() : prev();
+}, { passive: true });
 
-show('intro');
 fit();
+show('intro');
 if (document.fonts) {
   Promise.all(FAMS.flatMap(f => [document.fonts.load(`400 40px "${f}"`), document.fonts.load(`700 40px "${f}"`)])).catch(() => {});
 }
