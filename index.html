@@ -243,8 +243,8 @@ const ESSAY = [
 ];
 
 const SIDES = {
-  given:  { q: "Who are you when you<br>take up space?", word: "space?", rules: GIVEN },
-  making: { q: "Who are you when you<br>stop making room?", word: "room?", rules: MAKING }
+  given:  { q: "Who are you when you <br>take up space?", word: "space?", rules: GIVEN },
+  making: { q: "Who are you when you <br>stop making room?", word: "room?", rules: MAKING }
 };
 
 const FAMS = ['Redaction', 'Redaction 10', 'Redaction 20', 'Redaction 35', 'Redaction 50', 'Redaction 70', 'Redaction 100'];
@@ -271,7 +271,7 @@ function makeLayout(portrait, vw, vh) {
   return {
     portrait, W: 1000, H, ticks: 20, tickX: k => 935 - (k - 1) * 45,
     flag: { top: 64, bottom: 140, back: 22, tip: 28 }, box: [48, 300, 222, 165], stroke: [3, 3.5],
-    ring: { cx: 500, cy: Math.round(H * 0.63), rx: 590, ry: Math.round(H * 0.29), base: 74, spread: 22 }
+    ring: { cx: 500, cy: Math.round(H * 0.63), rx: 590, ry: Math.round(H * 0.29), base: 88, spread: 22 }
   };
 }
 
