@@ -21,7 +21,8 @@
     --face: 'Redaction', 'Times New Roman', Times, serif;
     color-scheme: light;
   }
-  html.inverted { --surround: #0d0d0d; }
+  /* the flipped page is white inverted, which is pure black; the surround matches it exactly */
+  html.inverted { --surround: #000000; }
   html { background: var(--surround); }
   html, body { height: 100%; }
   body {
@@ -61,7 +62,7 @@
   #question {
     position: absolute; left: 84px; top: 46px; margin: 0;
     font-family: 'Redaction', 'Times New Roman', serif;
-    font-weight: 400; font-size: 158px; line-height: .86; letter-spacing: -1px; white-space: nowrap;
+    font-weight: 400; font-size: 132px; line-height: .88; letter-spacing: -1px; white-space: nowrap;
   }
   .ring-word { position: absolute; white-space: nowrap; line-height: 1; transform: translate(-50%, -50%); }
   .ring-word.pending { visibility: hidden; }
@@ -286,7 +287,10 @@ function fit() {
   stage.style.width = L.W + 'px';
   stage.style.height = L.H + 'px';
   const s = Math.min(vw / L.W, vh / L.H);
-  stage.style.transform = `translate(${(vw - L.W * s) / 2}px, ${(vh - L.H * s) / 2}px) scale(${s})`;
+  const tx = (vw - L.W * s) / 2;
+  stage.style.transform = `translate(${tx}px, ${(vh - L.H * s) / 2}px) scale(${s})`;
+  // on wide screens the question sits against the left edge of the window, not the centered page
+  $('question').style.left = portrait ? '' : `${Math.min(84, (16 - tx) / s)}px`;
   if (changed) relayout();
 }
 let resizeTimer = 0;
