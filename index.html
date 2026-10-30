@@ -9,15 +9,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Redaction:ital,wght@0,400;0,700;1,400&family=Redaction+10:wght@400;700&family=Redaction+20:wght@400;700&family=Redaction+35:wght@400;700&family=Redaction+50:wght@400;700&family=Redaction+70:wght@400;700&family=Redaction+100:wght@400;700&display=swap">
 <style>
   [hidden] { display: none !important; }
-  /* Layout: one fixed 2000×1332 book spread, scaled to fit the screen. Black type on white paper,
-     a hairline gutter down the middle. Flipping turns the whole spread upside down and inverts it. */
+  /* Layout: one fixed 2000×1332 book spread, scaled to fit the screen. Black type on full white paper. Flipping turns the whole spread upside down and inverts it. */
   :root {
     --paper: #ffffff;
     --ink: #0d0d0d;
-    --gutter: #c8c8c4;
     --muted: #77776f;
     --faded: #b9b9b2;
-    --surround: #e6e5e0;
+    --surround: #ffffff;
     --face: 'Redaction', 'Times New Roman', Times, serif;
     color-scheme: light;
   }
@@ -41,7 +39,6 @@
     overflow: hidden;
   }
   #book.flipped { transform: rotate(180deg); filter: invert(1); }
-  .gutter { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--gutter); }
   .view { position: absolute; inset: 0; transition: opacity 700ms ease; }
   .view.fading { opacity: 0; }
 
@@ -134,8 +131,6 @@
 <div id="viewport">
   <div id="stage">
     <div id="book">
-      <div class="gutter"></div>
-
       <section id="intro" class="view">
         <h1 id="question"></h1>
         <div id="ring" aria-hidden="true"></div>
