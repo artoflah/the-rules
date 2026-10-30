@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Redaction:ital,wght@0,400;0,700;1,400&family=Redaction+10:wght@400;700&family=Redaction+20:wght@400;700&family=Redaction+35:wght@400;700&family=Redaction+50:wght@400;700&family=Redaction+70:wght@400;700&family=Redaction+100:wght@400;700&display=swap">
+<style>
+  [hidden] { display: none !important; }
+  /* Layout: one fixed 2000×1332 book spread, scaled to fit the screen. Black type on white paper,
+     a hairline gutter down the middle. Flipping turns the whole spread upside down and inverts it. */
+  :root {
+    --paper: #ffffff;
+    --ink: #0d0d0d;
+    --gutter: #c8c8c4;
+    --muted: #77776f;
+    --faded: #b9b9b2;
+    --surround: #e6e5e0;
+    --face: 'Redaction', 'Times New Roman', Times, serif;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body {
+    box-sizing: border-box;
+    margin: 0;
+    background: var(--surround);
+    color: var(--ink);
+    font-family: var(--face);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 16px;
+    overflow: hidden;
+  }
+  #viewport { position: relative; width: 100%; height: 100%; }
+  #stage { position: absolute; left: 0; top: 0; width: 2000px; height: 1332px; transform-origin: 0 0; }
+  #book {
+    position: absolute; inset: 0; box-sizing: border-box;
+    border: 8px solid var(--ink); background: var(--paper); color: var(--ink);
+    overflow: hidden;
+  }
+  #book.flipped { transform: rotate(180deg); filter: invert(1); }
+  .gutter { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--gutter); }
+  .view { position: absolute; inset: 0; transition: opacity 700ms ease; }
+  .view.fading { opacity: 0; }
+
+  /* pixel transition: every letter on the page steps through Redaction 10 → 100 */
+  #stage.px #book * { font-family: var(--pxface), var(--face) !important; }
+
+  /* corner boxes */
+  .corner {
+    position: absolute; right: 40px; bottom: 36px; z-index: 4;
+    font-family: var(--face); font-size: 26px; line-height: 1;
+    padding: 12px 20px 14px; background: var(--paper); color: var(--ink);
+    border: 2px solid var(--ink); cursor: pointer;
+    transition: opacity 900ms ease;
+  }
+  .corner.waiting { opacity: 0; pointer-events: none; }
+  button:focus-visible, [role="button"]:focus-visible, .b:focus-visible { outline: 3px solid #2f6fde; outline-offset: 3px; }
+
+  /* ---------- intro ---------- */
+  #intro h1 {
+    position: absolute; left: 84px; top: 46px; margin: 0;
+    font-family: 'Redaction', 'Times New Roman', serif;
+    font-weight: 400; font-size: 158px; line-height: .86; letter-spacing: -1px; white-space: nowrap;
+  }
+  .ring-word { position: absolute; white-space: nowrap; line-height: 1; transform: translate(-50%, -50%); }
+  .ring-word.pending { visibility: hidden; }
+  .ring-word.arrive { animation: arrive 600ms steps(5) both; }
+  @keyframes arrive { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }
+
+  /* ---------- opening text ---------- */
+  #essay-text {
+    position: absolute; left: 112px; top: 104px; width: 1776px; margin: 0;
+    column-count: 2; column-gap: 256px;
+    font-family: var(--face); font-size: 25px; line-height: 1.46;
+  }
+  #essay-text p { margin: 0; }
+  #essay-text p.in { text-indent: 2.6em; }
+  #essay-text p.q { font-style: italic; }
+
+  /* ---------- rule spread ---------- */
+  #ruler { position: absolute; left: 0; top: 84px; width: 100%; height: 40px; }
+  #ruler button {
+    position: absolute; top: 0; transform: translateX(-50%);
+    writing-mode: vertical-rl; background: none; border: 0; padding: 2px 0; margin: 0;
+    font-family: var(--face); font-size: 17px; line-height: 1; color: var(--ink); cursor: default;
+  }
+  #ruler button.live { cursor: pointer; }
+  #ruler button.live:hover { text-decoration: underline; }
+  #lines { position: absolute; inset: 0; width: 2000px; height: 1332px; pointer-events: none; }
+  #num {
+    position: absolute; left: 392px; top: 352px; margin: 0;
+    font-family: 'Redaction 50', 'Redaction', serif; font-weight: 700;
+    font-size: 250px; line-height: 1; letter-spacing: -6px;
+  }
+  #rule {
+    position: absolute; right: 216px; top: 404px; width: 1070px; margin: 0;
+    font-family: var(--face); font-size: 55px; line-height: 1.43; text-align: right;
+    transition: color 700ms ease;
+  }
+  #rule .b {
+    border: 2px solid currentColor; padding: 0 8px; cursor: pointer;
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    transition: color 700ms ease, border-color 700ms ease;
+  }
+  #rule .b:hover { background: rgba(13,13,13,.06); }
+  #rule.grey { color: var(--faded); }
+  #rule.grey .b { color: var(--ink); border-color: var(--ink); }
+  .folio { position: absolute; font-size: 18px; color: var(--muted); }
+  .folio.l { left: 88px; top: 662px; }
+  .folio.r { right: 88px; top: 652px; }
+
+  /* the spread draws itself on the first arrival */
+  #spread.enter #ruler button { animation: tick 380ms both; animation-delay: calc(var(--d) * 9ms); }
+  #spread.enter #lead { stroke-dasharray: 1400; animation: draw 1100ms 700ms both cubic-bezier(.6,0,.3,1); }
+  #spread.enter #flag, #spread.enter #numbox { animation: tick 500ms 1500ms both; }
+  #spread.enter #num { animation: tick 500ms 1300ms both; }
+  #spread.enter #rule { animation: tick 900ms 1700ms both; }
+  #spread.enter .folio { animation: tick 600ms 2000ms both; }
+  @keyframes tick { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes draw { from { stroke-dashoffset: 1400; } to { stroke-dashoffset: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .view { transition: none; }
+    #spread.enter * { animation: none !important; }
+    .ring-word.arrive { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="stage">
+    <div id="book">
+      <div class="gutter"></div>
+
+      <section id="intro" class="view">
+        <h1 id="question"></h1>
+        <div id="ring" aria-hidden="true"></div>
+        <button id="open" class="corner waiting" type="button">read →</button>
+      </section>
+
+      <section id="essay" class="view" hidden>
+        <div id="essay-text"></div>
+        <button id="to-rules" class="corner" type="button">rule 01 →</button>
+      </section>
+
+      <section id="spread" class="view" hidden>
+        <nav id="ruler" aria-label="Rules"></nav>
+        <svg id="lines" viewBox="0 0 2000 1332" aria-hidden="true">
+          <rect id="numbox" x="365" y="420" width="267" height="195" fill="none" stroke="currentColor" stroke-width="2"/>
+          <line id="lead" x1="632" y1="420" x2="1890" y2="125" stroke="currentColor" stroke-width="2.5"/>
+          <path id="flag" d="" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        </svg>
+        <p id="num">01.</p>
+        <p id="rule"></p>
+        <span class="folio l" id="folioL">8</span>
+        <span class="folio r" id="folioR">9</span>
+      </section>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* Each given rule hides its opposite: read only the boxed words. */
+const GIVEN = [
+  "[You will take up] as little [space] as possible. Keep your arms close, your legs together and your belongings in your lap. [When you enter a room,] find the edge of it. When sharing a space, make room first: step aside on the sidewalk, move your bag off the seat, shift your body inward. [Do not wait to be asked.] It is better to give up space than to be seen taking it.",
+  "[You will keep your voice at a level that does] not [draw attention.] [Laughter] should be brief and quiet. [Excitement should be] kept inside. If someone nearby looks at you, assume you are too loud, and lower [your] voice [right] away, even if no one asked.",
+  "[Your hair will be] made neat, smooth and controlled before entering any important space. [Natural] texture may be read as unprofessional, unkempt or a statement. If in doubt, straighten it, cover it or pull it back. Your hair is a first impression, and [it speaks before you do.]",
+  "[You will speak] in a calm, pleasant and agreeable tone at all times. Any frustration, disagreement or firmness may be read as anger, and anger will be held against you. [If you are upset,] smile first. [If you are right, say it] softly.",
+  "[You] will behave in a way that proves you [deserve respect.] Dress well, speak properly, sit up straight and never give anyone a reason. [Your behavior] represents everyone who looks like you. One mistake [belongs to] all of [you.]",
+  "[You will] be careful how and when you [look at people.] Too much eye contact may be read as a challenge. Too little may be read as suspicious. Learn the right amount, and adjust it based on who is watching.",
+  "[You will speak] “proper” English in public. [The way you talk at home,] with family and with friends, must be left at the door. Switch quickly and smoothly. Never [let them hear] the switch.",
+  "[You will dress] to avoid assumptions. Avoid anything that could be called ghetto, flashy, revealing or [“too much.”] Remember that the same outfit on someone else may be called a trend. [On you, it will be called] a problem, not [a trend.]",
+  "[You will keep your] music, celebrations and gatherings contained. What feels like [joy] to you may sound like a disturbance to others. If a complaint is made, it will be assumed you were too [loud.]",
+  "[You will] work twice as hard to receive half as much. You will not complain about it. [Rest] will be seen as laziness, [and] to [ask for help] is weakness. You must always be the most prepared person in the room, and still be ready to be overlooked.",
+  "[You will be aware that your body is] being looked at, judged and talked about. Cover it so you don’t draw attention, but know that attention will come anyway. Your body will be called too much or not [enough,] often at the same time.",
+  "You will keep a pleasant face. When [your face is at rest,] people may read it as attitude, so smile when spoken to and smile when not. [Your comfort is] not as [important] as how comfortable others feel looking at you.",
+  "[You will] keep your hands visible and your movements clear when shopping. Don’t [linger.] Don’t touch more than you need. Keep your receipt. [You may] be followed, and you will not [take offense.]",
+  "[You will] speak English in shared spaces, and [keep your accent, your language and your food] mild. Anything that reminds others [you come from somewhere] else should be kept private.",
+  "[You will be responsible for the comfort of] everyone around [you.] If your presence makes someone uneasy, shrink, explain, soften, leave. [Their discomfort is not] to be ignored; fixing it will always be [your job.]",
+  "You will meet a standard of “professional” that was not built with you in mind. [Your hair, voice, clothes, name and personality] will be measured against it until each one [is professional.] [You will] not [ask who wrote the standard.]",
+  "[You will] avoid being seen in large groups. When people who look like you [gather,] it may be seen as a threat, even if you are only [laughing, talking or waiting.] Split up. Keep moving.",
+  "You will be grateful for [every opportunity,] as if it was given to you, not [earned.] Your presence in any room may be questioned, and you will answer politely. Never [act like you belong.] Act like you are thankful to be allowed.",
+  "[You will] be strong. You will not [cry in public, show weakness or ask for care.] You will hold everyone else up. Your pain may not be believed, so don’t waste it by showing it.",
+  "You will know [your place]. You will learn it early, from everything above. You will feel what it [is] in [every room], and you will stay inside it without being told. If you ever forget, someone will remind you."
+];
+
+const MAKING = [
+  "You will take up as much space as you need. Stretch your arms, set your bag down and sit the way your body wants to sit. When you enter a room, walk into the middle of it. You do not need to make room first, and you do not need to be asked. You were never taking space. It was already yours.",
+  "You will let your voice be as loud as your joy. Laugh all the way through. Let your excitement out. If someone nearby looks at you, let them look. Being heard is not the same as being too loud.",
+  "Your hair will be worn however you choose: natural, braided, locked, wrapped, short, long or changing every week. Your hair is not a statement unless you want it to be. It is already done. It does not need permission to grow the way it grows.",
+  "You will speak in whatever tone is true. Frustration, disagreement and firmness are not anger. And if it is anger, it is information, not a threat. If you are upset, you don’t have to smile. If you are right, say it clearly.",
+  "You will be respected because you are a person, not because you earned it. Dress how you want, speak how you speak, sit how you sit. Your behavior belongs to you alone. One mistake belongs only to the one who made it.",
+  "You will look at whoever you want, for as long as feels natural. Your gaze is not a challenge, and it is not suspicious. You don’t need to measure it, and you don’t need to adjust it for anyone watching.",
+  "You will speak the way you speak, at home, in public and everywhere in between. Your language is not a mistake to be corrected. If you switch, it is a choice, not a requirement. Let them hear you.",
+  "You will dress for yourself. Wear what makes you feel like you, whether that’s bold, bright, loose, fitted or “too much.” If it’s a trend on someone else, it can be a trend on you. Your outfit is not a problem.",
+  "You will let your music play and your celebrations be full. Joy is not a disturbance. If someone complains, it does not mean you were at fault. Turn it up for the people who need to hear it.",
+  "You will work hard because you choose to, and you will be paid and credited fairly for it. Rest is not laziness, and asking for help is not weakness. You do not have to be twice as anything to deserve your place.",
+  "Your body belongs to you. You will not cover it, shrink it or hide it to manage other people’s eyes. It is not too much, and it is not a spectacle. It is just your body, living its life.",
+  "You will wear whatever face you are feeling. Your face at rest is just your face. Smile when something makes you smile. Your comfort matters more than how comfortable anyone else is looking at you.",
+  "You will move through every store and public place freely. Linger. Touch what you want to look at. Take your time. You belong in every room you walk into, and you do not owe anyone proof.",
+  "You will bring all of yourself into shared spaces: your accent, your language, your food, your music and your name, said correctly. Where you come from is not something to hide. It comes with you.",
+  "You will be responsible for your own comfort. If your presence makes someone uneasy, that feeling belongs to them. You do not have to shrink, explain, soften or leave. You deserve to feel at ease too.",
+  "You will help write a new standard of “professional,” one that includes your hair, your voice, your clothes, your name and your personality. You will ask who wrote the old standard, and you will not be afraid of the answer.",
+  "You will gather with your people as often and as loudly as you want. Being together is not a threat. Laugh, talk, wait, stay. You don’t need to split up, and you don’t need to keep moving.",
+  "You will know that you earned every opportunity you have. When your presence is questioned, you don’t owe anyone an answer. Act like you belong, because you do. You are not here because you were allowed. You are here because you arrived.",
+  "You will be allowed to be soft. Cry when you need to, rest when you’re tired and ask for care without apologizing. You do not have to hold everyone up. Your pain is real, and it deserves to be believed.",
+  "You will know your place, and your place is wherever you are. It is a place of power. You will feel it in every room, and you will take up all of it. If anyone ever tries to remind you otherwise, remind them."
+];
+
+/* the opening text: in = indented paragraph, q = the question */
+const ESSAY = [
+  ["in", "i have never forgotten that i am black. but the world has a way of making sure i remember and know “my place”: on a train, in a classroom, in a job interview, even in my relationships. my joy, my comfort and my presence are constantly measured, objectified and shrunk into something more acceptable to others."],
+  ["in", "nobody hands you these rules all at once. they arrive slowly, over years. a look from a stranger. a correction from a teacher. a warning from someone who loves you. some are said out loud: lower your voice. fix your hair. be professional. most are never said at all. you just learn them, the way you learn where the stairs creak in your own house."],
+  ["in", "the rules didn’t come from nowhere. many of them were written into law. there were laws about how loud we could be, how we could wear our hair, where we could gather, where we could walk, and whether we could look someone in the eye. the laws changed, but the expectations stayed. they moved out of courtrooms and into classrooms, offices, stores and sidewalks. they stopped being written down and started being passed down."],
+  ["in", "some of the rules were given to us to control us. they protected other people’s comfort, and they kept us small enough to be easy to manage, easy to sell, easy to ignore. some of the rules were given to us out of love. our families taught them to keep us safe in a world that wasn’t built for us. i don’t blame the people who taught me to shrink. many of them were taught to shrink too. that’s how a rule outlives the people who made it: it gets handed down like an heirloom nobody asked for."],
+  ["in", "this project collects those rules. some are mine. some belong to people who answered the same question i’ve been asking myself:"],
+  ["q", "what’s a rule you were given?"],
+  ["", "read them together and you’ll see they repeat. different people, different places, different ages, the same instructions. that isn’t a coincidence. it’s a system."],
+  ["in", "but a rule is just a rule. it only has power as long as we keep following it."],
+  ["in", "so we’re making new ones."],
+  ["in", "not to replace one set of limits with another, but to write down what we already know is true: that our joy isn’t too loud, our comfort isn’t a disturbance and our presence doesn’t need permission. the rules we’re making don’t ask anyone to make room for us. they say we were always allowed to take it."],
+  ["in", "this project has two beginnings. read it one way and you’ll find the rules we were given."],
+  ["in", "turn it upside down and you’ll find the rules we’re making."],
+  ["", "the project is the same object. it was always the same object. only the direction changed."],
+  ["", "this project explores what it feels like to be reminded, and asks what happens when “my place” is a place of power."]
+];
+
+const SIDES = {
+  given:  { q: "Who are you when you<br>take up space?", word: "space?", rules: GIVEN },
+  making: { q: "Who are you when you<br>stop making room?", word: "room?", rules: MAKING }
+};
+
+const FAMS = ['Redaction', 'Redaction 10', 'Redaction 20', 'Redaction 35', 'Redaction 50', 'Redaction 70', 'Redaction 100'];
+const PX_OUT = FAMS.slice(1);
+const PX_IN = PX_OUT.slice().reverse();
+const TICKS = 74, STEP_MS = 70, RING_N = 24, RING_MS = 10000;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const $ = id => document.getElementById(id);
+const stage = $('stage'), book = $('book');
+let side = 'given', view = 'intro', page = 1, busy = false, wave = 0;
+let ringTimers = [], revealTimer = 0;
+const ringPlayed = { given: false, making: false };
+
+/* ---------- scale the spread to the screen ---------- */
+function fit() {
+  const vp = $('viewport');
+  const s = Math.min(vp.clientWidth / 2000, vp.clientHeight / 1332);
+  stage.style.transform = `translate(${(vp.clientWidth - 2000 * s) / 2}px, ${(vp.clientHeight - 1332 * s) / 2}px) scale(${s})`;
+}
+addEventListener('resize', fit);
+
+/* ---------- intro ring: the word arrives over ten seconds ---------- */
+function ringHTML(word, pending) {
+  const cx = 930, cy = 800, rx = 960, ry = 430;
+  let html = '';
+  for (let i = 0; i < RING_N; i++) {
+    const t = (-100 + (290 * i) / (RING_N - 1) + Math.sin(i * 2.3) * 6) * Math.PI / 180;
+    const x = cx + rx * Math.cos(t) + Math.sin(i * 1.7) * 40;
+    const y = cy + ry * Math.sin(t) + Math.cos(i * 1.3) * 30;
+    const size = 102 + ((i * 37) % 28);
+    html += `<span class="ring-word${pending ? ' pending' : ''}" data-i="${i}" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;font-size:${size}px;font-family:'${FAMS[i % FAMS.length]}', 'Times New Roman', serif">${word}</span>`;
+  }
+  return html;
+}
+function playRing() {
+  ringTimers.forEach(clearTimeout);
+  ringTimers = [];
+  const S = SIDES[side];
+  const play = !ringPlayed[side] && !reduced;
+  $('ring').innerHTML = ringHTML(S.word, play);
+  $('open').classList.toggle('waiting', play);
+  if (!play) return;
+  const words = [...document.querySelectorAll('#ring .ring-word')];
+  words.forEach((el, i) => {
+    ringTimers.push(setTimeout(() => { el.classList.remove('pending'); el.classList.add('arrive'); }, (RING_MS / RING_N) * i));
+  });
+  ringTimers.push(setTimeout(() => { ringPlayed[side] = true; $('open').classList.remove('waiting'); }, RING_MS));
+}
+function tickWave() {
+  if (view !== 'intro' || reduced || stage.classList.contains('px')) return;
+  wave++;
+  document.querySelectorAll('#ring .ring-word').forEach(el => {
+    el.style.fontFamily = `'${FAMS[(+el.dataset.i + wave) % FAMS.length]}', 'Times New Roman', serif`;
+  });
+}
+setInterval(tickWave, 480);
+
+/* ---------- opening text ---------- */
+$('essay-text').innerHTML = ESSAY.map(([c, t]) => `<p class="${c}">${t}</p>`).join('');
+
+/* ---------- ruler ---------- */
+const tickX = k => 1903 - (k - 1) * 24.5;
+(function buildRuler() {
+  let html = '';
+  for (let k = TICKS; k >= 1; k--) {
+    const live = k <= 20, label = String(k).padStart(2, '0') + '.';
+    html += `<button type="button" class="${live ? 'live' : ''}" style="left:${tickX(k)}px;--d:${TICKS - k}" ${live ? `data-k="${k}" aria-label="Rule ${k}"` : 'tabindex="-1" aria-hidden="true"'}>${label}</button>`;
+  }
+  $('ruler').innerHTML = html;
+  $('ruler').addEventListener('click', e => {
+    const b = e.target.closest('button[data-k]');
+    if (b) goRule(+b.dataset.k);
+  });
+})();
+
+/* ---------- spreads ---------- */
+const boxed = s => s.replace(/\[([^\]]+)\]/g, '<span class="b" role="button" tabindex="0">$1</span>');
+const plain = s => s.replace(/[\[\]]/g, '');
+const pad = k => String(k).padStart(2, '0') + '.';
+
+function renderRule() {
+  const k = page, x = tickX(k);
+  $('num').textContent = pad(k);
+  $('rule').innerHTML = side === 'given' ? boxed(GIVEN[k - 1]) : MAKING[k - 1];
+  $('rule').classList.remove('grey');
+  $('lead').setAttribute('x2', x - 12);
+  $('flag').setAttribute('d', `M${x - 12} 125 V80 L${x + 16} 96 L${x - 12} 104`);
+  $('folioL').textContent = 6 + k * 2;
+  $('folioR').textContent = 7 + k * 2;
+  document.querySelectorAll('#ruler button[data-k]').forEach(b => b.toggleAttribute('aria-current', +b.dataset.k === k));
+}
+
+/* the intro, the opening text and every rule start on the given side; only a reveal turns the page over */
+function setSide(s) {
+  side = s;
+  book.classList.toggle('flipped', s === 'making');
+}
+
+function show(v) {
+  view = v;
+  clearTimeout(revealTimer);
+  $('intro').hidden = v !== 'intro';
+  $('essay').hidden = v !== 'essay';
+  $('spread').hidden = v !== 'rule';
+  if (v === 'intro') { $('question').innerHTML = SIDES[side].q; playRing(); }
+  else ringTimers.forEach(clearTimeout);
+  if (v === 'rule') renderRule();
+}
+
+/* ---------- transitions ---------- */
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function pixelate(seq) {
+  stage.classList.add('px');
+  for (const f of seq) { stage.style.setProperty('--pxface', `'${f}'`); await wait(STEP_MS); }
+}
+async function pixelSwap(change) {
+  if (busy) return;
+  busy = true;
+  if (reduced) { change(); busy = false; return; }
+  await pixelate(PX_OUT);
+  change();
+  await pixelate(PX_IN);
+  stage.classList.remove('px');
+  busy = false;
+}
+/* the opening text fades out and rule one draws itself onto the page */
+async function fadeToRuleOne() {
+  if (busy) return;
+  busy = true;
+  page = 1;
+  if (reduced) { show('rule'); busy = false; return; }
+  $('essay').classList.add('fading');
+  await wait(700);
+  $('essay').classList.remove('fading');
+  $('spread').classList.add('enter');
+  show('rule');
+  await pixelate(PX_IN);
+  stage.classList.remove('px');
+  await wait(2200);
+  $('spread').classList.remove('enter');
+  busy = false;
+}
+function goRule(k) {
+  k = Math.max(1, Math.min(20, k));
+  if (view === 'rule' && k === page && side === 'given') return;
+  pixelSwap(() => { page = k; setSide('given'); show('rule'); });
+}
+function next() {
+  if (view === 'intro') pixelSwap(() => show('essay'));
+  else if (view === 'essay') fadeToRuleOne();
+  else if (page < 20) goRule(page + 1);
+}
+function prev() {
+  if (view === 'essay') pixelSwap(() => show('intro'));
+  else if (view === 'rule' && side === 'making') goRule(page);
+  else if (view === 'rule') page > 1 ? goRule(page - 1) : pixelSwap(() => show('essay'));
+}
+
+/* ---------- reveal: click a boxed word, everything else fades to grey.
+   After enough time to read the hidden message, the page pixelates over to
+   the opposite rule, upside down. ---------- */
+const readingTime = k => {
+  const words = (GIVEN[k - 1].match(/\[([^\]]+)\]/g) || []).join(' ').split(/\s+/).length;
+  return Math.max(3500, 1800 + words * 380);
+};
+function reveal() {
+  if (side !== 'given' || view !== 'rule' || busy) return;
+  const r = $('rule');
+  r.classList.toggle('grey');
+  clearTimeout(revealTimer);
+  if (!r.classList.contains('grey')) return;
+  const k = page;
+  revealTimer = setTimeout(() => {
+    if (view !== 'rule' || page !== k || side !== 'given' || !r.classList.contains('grey')) return;
+    pixelSwap(() => { setSide('making'); show('rule'); });
+  }, readingTime(k));
+}
+$('rule').addEventListener('click', e => { if (e.target.closest('.b')) reveal(); });
+$('rule').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.b')) { e.preventDefault(); reveal(); } });
+
+/* ---------- controls ---------- */
+$('open').addEventListener('click', () => pixelSwap(() => show('essay')));
+$('to-rules').addEventListener('click', fadeToRuleOne);
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('.b')) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+});
+
+show('intro');
+fit();
+if (document.fonts) {
+  Promise.all(FAMS.flatMap(f => [document.fonts.load(`400 40px "${f}"`), document.fonts.load(`700 40px "${f}"`)])).catch(() => {});
+}
+</script>
+
+</body>
+</html>
